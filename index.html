@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
@@ -31,10 +30,13 @@
         .page.active { display: block; }
 
         /* Components */
-        .btn-neon { background: var(--neon); color: #000; padding: 12px; border-radius: 6px; font-weight: 700; border: none; cursor: pointer; width: 100%; margin-top: 10px; transition: 0.2s; }
+        .btn-neon { background: var(--neon); color: #000; padding: 10px 20px; border-radius: 6px; font-weight: 700; border: none; cursor: pointer; transition: 0.2s; display: inline-block; }
         .btn-neon:hover { opacity: 0.9; }
+        .btn-full { width: 100%; margin-top: 10px; }
+        
         input, select { width: 100%; padding: 12px; margin: 10px 0; background: #1a1a1a; border: 1px solid var(--border); color: #fff; border-radius: 6px; outline: none; }
         .sidebar-header { padding: 30px; text-align: center; color: var(--neon); font-weight: 800; font-size: 1.5rem; }
+        
         .nav-btn { width: 100%; padding: 15px 25px; background: none; border: none; color: #888; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 15px; border-right: 3px solid transparent; }
         .nav-btn.active { color: var(--neon); background: rgba(57, 255, 20, 0.05); border-right: 3px solid var(--neon); }
         
@@ -43,15 +45,13 @@
         .data-table th { color: var(--neon); background: #0a0a0a; font-weight: 600; }
         img.table-img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
 
-        /* Modal Styles */
+        /* Modals */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; padding: 20px; }
         .modal.active { display: flex; }
         .modal-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 25px; width: 100%; max-width: 450px; position: relative; }
-        .modal-card h3 { color: var(--neon); margin-bottom: 15px; }
         .close-modal { position: absolute; top: 15px; right: 15px; cursor: pointer; color: #666; font-size: 1.2rem; }
         
         .address-text { background: #000; padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px; font-size: 0.85rem; line-height: 1.6; color: #ccc; }
-        .address-text strong { color: #fff; }
     </style>
 </head>
 <body>
@@ -61,25 +61,45 @@
             <h2 style="color: var(--neon); margin-bottom: 20px;">XNEON ADMIN</h2>
             <div id="email-step">
                 <input type="email" id="admin-email-input" placeholder="Admin Email" value="tripathivlogs39@gmail.com">
-                <button class="btn-neon" id="send-otp-btn">SEND OTP</button>
+                <button class="btn-neon btn-full" id="send-otp-btn">SEND OTP</button>
             </div>
             <div id="otp-step" style="display: none;">
                 <p style="font-size: 0.8rem; color: #888; margin-bottom: 10px;">Check your email for the 4-digit code.</p>
                 <input type="text" id="admin-otp-input" placeholder="Enter OTP" maxlength="4">
-                <button class="btn-neon" id="verify-otp-btn">VERIFY ACCESS</button>
+                <button class="btn-neon btn-full" id="verify-otp-btn">VERIFY ACCESS</button>
             </div>
             <p id="auth-msg" style="margin-top: 15px; font-size: 0.8rem; min-height: 20px;"></p>
         </div>
     </div>
 
+    <div id="product-modal" class="modal">
+        <div class="modal-card">
+            <i class="fas fa-times close-modal" onclick="closeModal('product-modal')"></i>
+            <h3>Add New Product</h3>
+            <input type="text" id="p-name" placeholder="Product Name">
+            <input type="number" id="p-price" placeholder="Price (₹)">
+            <input type="text" id="p-img" placeholder="Image URL">
+            <input type="text" id="p-cat" placeholder="Category (e.g. Neon)">
+            <input type="text" id="p-desc" placeholder="Description">
+            <button class="btn-neon btn-full" onclick="saveProduct()">Save Product</button>
+        </div>
+    </div>
+
+    <div id="slider-modal" class="modal">
+        <div class="modal-card">
+            <i class="fas fa-times close-modal" onclick="closeModal('slider-modal')"></i>
+            <h3>Add Slider Image</h3>
+            <input type="text" id="s-url" placeholder="Image URL">
+            <button class="btn-neon btn-full" onclick="saveSlider()">Add Slider</button>
+        </div>
+    </div>
+
     <div id="order-modal" class="modal">
         <div class="modal-card">
-            <i class="fas fa-times close-modal" onclick="closeOrderModal()"></i>
+            <i class="fas fa-times close-modal" onclick="closeModal('order-modal')"></i>
             <h3>Customer Details</h3>
-            
             <p style="font-size: 0.8rem; color: #888; margin-bottom: 5px;">Full Information:</p>
             <div class="address-text" id="modal-address">Loading...</div>
-            
             <p style="font-size: 0.8rem; color: #888; margin-bottom: 5px;">Change Order Status:</p>
             <select id="modal-status-select">
                 <option value="Pending">Pending</option>
@@ -88,7 +108,7 @@
                 <option value="Delivered">Delivered</option>
                 <option value="Cancelled">Cancelled</option>
             </select>
-            <button class="btn-neon" id="update-status-btn">Update Status</button>
+            <button class="btn-neon btn-full" id="update-status-btn">Update Status</button>
         </div>
     </div>
 
@@ -108,7 +128,10 @@
             </section>
 
             <section id="products-page" class="page">
-                <h1>Inventory</h1>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h1>Inventory</h1>
+                    <button class="btn-neon" onclick="openModal('product-modal')">+ Add Product</button>
+                </div>
                 <table class="data-table">
                     <thead><tr><th>Image</th><th>Name</th><th>Price</th><th>Action</th></tr></thead>
                     <tbody id="admin-product-list"></tbody>
@@ -124,7 +147,10 @@
             </section>
 
             <section id="slider-page" class="page">
-                <h1>Slider Images</h1>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h1>Slider Images</h1>
+                    <button class="btn-neon" onclick="openModal('slider-modal')">+ Add Slider</button>
+                </div>
                 <table class="data-table">
                     <thead><tr><th>Preview</th><th>Image URL</th><th>Action</th></tr></thead>
                     <tbody id="slider-table-body"></tbody>
@@ -134,11 +160,8 @@
     </div>
 
     <script>
-        // 1. INITIALIZE EXTERNAL SERVICES
-        (function() {
-            emailjs.init("7ps995woJ-0Gp79Nm");
-        })();
-
+        // 1. SETUP
+        (function() { emailjs.init("7ps995woJ-0Gp79Nm"); })();
         const firebaseConfig = {
             apiKey: "AIzaSyCCc2pN-sdmwoz1aXxqX4rnN1-oUU_5s7w",
             authDomain: "xneon-c12a2.firebaseapp.com",
@@ -148,173 +171,157 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 2. STATE VARIABLES
-        let systemOTP = "";
-        let currentOrderRef = "";
-        let orderCache = {};
+        let systemOTP = "", currentOrderRef = "", orderCache = {};
 
-        // 3. UI HELPERS
-        function switchPage(pageId, btn) {
+        // 2. UI HELPERS
+        function switchPage(id, btn) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
+            document.getElementById(id).classList.add('active');
             btn.classList.add('active');
         }
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-        function closeOrderModal() {
-            document.getElementById('order-modal').classList.remove('active');
-        }
-
-        // 4. AUTHENTICATION (Send OTP)
-        document.getElementById('send-otp-btn').addEventListener('click', function() {
-            const emailInput = document.getElementById('admin-email-input').value.trim();
+        // 3. AUTHENTICATION
+        document.getElementById('send-otp-btn').onclick = function() {
+            const email = document.getElementById('admin-email-input').value.trim();
             const msg = document.getElementById('auth-msg');
-
             msg.innerText = "Processing...";
-            msg.style.color = "#888";
-
-            if (emailInput !== "tripathivlogs39@gmail.com") {
-                msg.innerText = "Error: Unauthorized Email Address.";
-                msg.style.color = "red";
-                return;
-            }
-
+            if(email !== "tripathivlogs39@gmail.com") return msg.innerText = "Unauthorized";
+            
             systemOTP = Math.floor(1000 + Math.random() * 9000).toString();
+            emailjs.send('service_3vbmeu4', 'template_0lecpgb', { to_email: email, otp: systemOTP })
+                .then(() => {
+                    document.getElementById('email-step').style.display = 'none';
+                    document.getElementById('otp-step').style.display = 'block';
+                    msg.innerText = "OTP Sent!";
+                });
+        };
 
-            emailjs.send('service_3vbmeu4', 'template_0lecpgb', {
-                to_email: emailInput,
-                otp: systemOTP
-            }).then(function() {
-                document.getElementById('email-step').style.display = 'none';
-                document.getElementById('otp-step').style.display = 'block';
-                msg.innerText = "Success: OTP Sent to Email.";
-                msg.style.color = "#39FF14";
-            }, function(error) {
-                console.error("EmailJS Error:", error);
-                msg.innerText = "Failed to send email. Check console.";
-                msg.style.color = "red";
-            });
-        });
-
-        // 5. AUTHENTICATION (Verify OTP)
-        document.getElementById('verify-otp-btn').addEventListener('click', function() {
-            const entered = document.getElementById('admin-otp-input').value.trim();
-            if (entered === systemOTP) {
+        document.getElementById('verify-otp-btn').onclick = function() {
+            if(document.getElementById('admin-otp-input').value === systemOTP) {
                 document.getElementById('auth-overlay').style.display = 'none';
                 document.getElementById('admin-wrapper').style.display = 'block';
-                loadStoreData(); // Start Loading Data
-            } else {
-                alert("Incorrect OTP. Please try again.");
-            }
-        });
+                loadData();
+            } else alert("Wrong OTP");
+        };
 
-        // 6. LOAD FIREBASE DATA
-        function loadStoreData() {
+        // 4. ADD DATA FUNCTIONS
+        window.saveProduct = function() {
+            const data = {
+                name: document.getElementById('p-name').value,
+                price: document.getElementById('p-price').value,
+                imageUrl: document.getElementById('p-img').value,
+                category: document.getElementById('p-cat').value || "General",
+                description: document.getElementById('p-desc').value || ""
+            };
+            if(!data.name || !data.price) return alert("Enter Name and Price");
+            db.ref('products').push(data).then(() => {
+                alert("Product Added!");
+                closeModal('product-modal');
+                document.querySelectorAll('#product-modal input').forEach(i => i.value = '');
+            });
+        };
+
+        window.saveSlider = function() {
+            const url = document.getElementById('s-url').value;
+            if(!url) return alert("Enter URL");
+            db.ref('sliderImages').push({ downloadURL: url }).then(() => {
+                alert("Slider Added!");
+                closeModal('slider-modal');
+                document.getElementById('s-url').value = '';
+            });
+        };
+
+        // 5. DATA LOADING
+        function loadData() {
             // Products
-            db.ref('products').on('value', (snap) => {
+            db.ref('products').on('value', snap => {
                 const list = document.getElementById('admin-product-list');
                 list.innerHTML = "";
-                snap.forEach(child => {
-                    const p = child.val();
+                snap.forEach(p => {
                     list.innerHTML += `<tr>
-                        <td><img src="${p.imageUrl}" class="table-img"></td>
-                        <td>${p.name}</td>
-                        <td>₹${p.price}</td>
-                        <td><button class="delete-btn" data-type="products" data-key="${child.key}" style="color:red; cursor:pointer; background:none; border:none;">Delete</button></td>
+                        <td><img src="${p.val().imageUrl}" class="table-img"></td>
+                        <td>${p.val().name}</td>
+                        <td>₹${p.val().price}</td>
+                        <td><button class="btn-neon" style="padding:5px 10px; background:red; color:#fff;" onclick="del('products/${p.key}')">Delete</button></td>
+                    </tr>`;
+                });
+            });
+
+            // Sliders
+            db.ref('sliderImages').on('value', snap => {
+                const list = document.getElementById('slider-table-body');
+                list.innerHTML = "";
+                snap.forEach(s => {
+                    list.innerHTML += `<tr>
+                        <td><img src="${s.val().downloadURL}" class="table-img"></td>
+                        <td>${s.val().downloadURL}</td>
+                        <td><button class="btn-neon" style="padding:5px 10px; background:red; color:#fff;" onclick="del('sliderImages/${s.key}')">Delete</button></td>
                     </tr>`;
                 });
             });
 
             // Orders
-            db.ref('orders').on('value', (snap) => {
+            db.ref('orders').on('value', snap => {
                 const list = document.getElementById('admin-order-list');
                 list.innerHTML = "";
-                orderCache = {}; // Clear Cache
-
-                snap.forEach(userNode => {
-                    userNode.forEach(orderNode => {
-                        const o = orderNode.val();
-                        const path = `orders/${userNode.key}/${orderNode.key}`;
-                        orderCache[path] = o; // Save to memory
-
-                        const statusColor = o.status === 'Delivered' ? 'var(--neon)' : o.status === 'Cancelled' ? 'red' : '#ffaa00';
-
+                orderCache = {};
+                snap.forEach(user => {
+                    user.forEach(order => {
+                        const o = order.val();
+                        const path = `orders/${user.key}/${order.key}`;
+                        orderCache[path] = o;
+                        const statusColor = o.status === 'Delivered' ? 'var(--neon)' : '#ffaa00';
                         list.innerHTML += `<tr>
-                            <td style="color:var(--neon); font-weight:bold;">${o.orderId}</td>
+                            <td style="color:var(--neon)">${o.orderId}</td>
                             <td>${o.shippingDetails?.name || 'Customer'}</td>
                             <td style="color:${statusColor}">${o.status}</td>
-                            <td><button class="manage-btn" data-path="${path}" style="background:#222; color:#fff; padding:5px 10px; border:1px solid #333; cursor:pointer;">Manage</button></td>
+                            <td><button class="btn-neon manage-btn" data-path="${path}" style="padding:5px 10px;">Manage</button></td>
                         </tr>`;
                     });
                 });
             });
-
-            // Sliders
-            db.ref('sliderImages').on('value', (snap) => {
-                const list = document.getElementById('slider-table-body');
-                list.innerHTML = "";
-                snap.forEach(child => {
-                    list.innerHTML += `<tr>
-                        <td><img src="${child.val().downloadURL}" class="table-img"></td>
-                        <td>${child.val().downloadURL}</td>
-                        <td><button class="delete-btn" data-type="sliderImages" data-key="${child.key}" style="color:red; cursor:pointer; background:none; border:none;">Delete</button></td>
-                    </tr>`;
-                });
-            });
         }
 
-        // 7. GLOBAL CLICK LISTENER (For Dynamic Buttons)
+        // 6. EVENT LISTENERS
         document.addEventListener('click', function(e) {
-            
-            // Delete Logic
-            if(e.target.classList.contains('delete-btn')) {
-                const type = e.target.getAttribute('data-type');
-                const key = e.target.getAttribute('data-key');
-                if(confirm("Delete this item?")) {
-                    db.ref(type + '/' + key).remove();
-                }
-            }
-
-            // Open Manage Modal
             if(e.target.classList.contains('manage-btn')) {
                 currentOrderRef = e.target.getAttribute('data-path');
                 const o = orderCache[currentOrderRef];
                 const ship = o.shippingDetails || {};
-
-                // --- PHONE & PINCODE (HIGHLIGHTED) ---
+                
                 const phone = ship.phone || ship.phoneNumber || ship.mobile || "N/A";
-                const pincode = ship.pincode || ship.zip || ship.zipcode || "N/A";
+                const pincode = ship.pincode || ship.zip || "N/A";
 
-                const html = `
-                    <div style="margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;">
+                document.getElementById('modal-address').innerHTML = `
+                    <div style="border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:10px;">
                         <strong>Name:</strong> ${ship.name || 'N/A'}<br>
                         <strong style="color:var(--neon)">Phone:</strong> ${phone}<br>
                         <strong>Email:</strong> ${ship.email || o.email || 'N/A'}
                     </div>
                     <div>
-                        <strong>Address:</strong> ${ship.houseNo || ship.address || ''}<br>
-                        <strong>Village/Street:</strong> ${ship.village || ship.street || ''}<br>
-                        <strong>City:</strong> ${ship.city || ''}, ${ship.state || ''}<br>
+                        <strong>House/Flat No:</strong> ${ship.houseNo || ship.address || ''}<br>
+                        <strong>Area/Village:</strong> ${ship.village || ''}<br> <strong>City:</strong> ${ship.city || ''}, ${ship.state || ''}<br>
                         <strong style="color:var(--neon)">Pincode:</strong> ${pincode}<br>
                         <strong>Country:</strong> ${ship.country || 'India'}
                     </div>
                 `;
-                document.getElementById('modal-address').innerHTML = html;
                 document.getElementById('modal-status-select').value = o.status;
-                document.getElementById('order-modal').classList.add('active');
+                openModal('order-modal');
             }
         });
 
-        // 8. UPDATE ORDER STATUS
         document.getElementById('update-status-btn').onclick = function() {
-            const newStatus = document.getElementById('modal-status-select').value;
-            if(currentOrderRef) {
-                db.ref(currentOrderRef).update({ status: newStatus }).then(() => {
-                    alert("Status Updated!");
-                    closeOrderModal();
-                });
-            }
+            const val = document.getElementById('modal-status-select').value;
+            db.ref(currentOrderRef).update({ status: val }).then(() => {
+                alert("Status Updated");
+                closeModal('order-modal');
+            });
         };
+
+        window.del = (path) => { if(confirm("Delete?")) db.ref(path).remove(); };
     </script>
 </body>
 </html>
